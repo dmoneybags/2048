@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1049]:
 
 
 "off white in python"
@@ -32,7 +32,7 @@ from tensorflow.keras import initializers
 from typing import Any, List, Sequence, Tuple
 
 
-# In[ ]:
+# In[1050]:
 
 
 def printd(str):
@@ -41,17 +41,18 @@ def printd(str):
         print(str)
 
 
-# In[ ]:
+# In[1051]:
 
 
 def bar(barnum):
+    #debugging flag
     if barnum == 1:
         printd("*******************************************************************")
     if barnum ==2:
         printd(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::")
 
 
-# In[ ]:
+# In[1052]:
 
 
 class Tile():
@@ -72,27 +73,29 @@ class Tile():
         return self.value, self.cordinates
 
 
-# In[ ]:
+# In[1053]:
 
 
 def addtiles(tile1, tile2):
+    #used in the testing version of the game
     tile3value = tile1.value + tile2.value
     tile3cordinates = [tile1.cordinates[1] + 1, tile1.cordinates[0] + 1]
     tile3 = Tile(tile3cordinates, tile3value)
     return tile3
 
 
-# In[ ]:
+# In[1054]:
 
 
 def loadsite():
     driver.get("https://play2048.co")
 
 
-# In[ ]:
+# In[1055]:
 
 
 def getcordinates(tilediv):
+    #used in the testing version to scrape tiles cords from html element
     tiledivclass = tilediv.get_attribute("class")
     printd(tiledivclass)
     cordsindex = tiledivclass.index("tile-position") + 14
@@ -107,7 +110,7 @@ def getcordinates(tilediv):
     return cords
 
 
-# In[ ]:
+# In[1056]:
 
 
 def gettiles(tilelist, y, x):
@@ -118,7 +121,7 @@ def gettiles(tilelist, y, x):
     return cordtiles
 
 
-# In[ ]:
+# In[1057]:
 
 
 def generatetiles(tiledivs):
@@ -153,7 +156,7 @@ def generatetiles(tiledivs):
     return tilelist
 
 
-# In[ ]:
+# In[1058]:
 
 
 def getboard():
@@ -189,7 +192,7 @@ def getboard():
     return board
 
 
-# In[ ]:
+# In[1059]:
 
 
 def generatevalidlist(board, action_logits):
@@ -262,7 +265,7 @@ def generatevalidlist(board, action_logits):
     return action_logits
 
 
-# In[ ]:
+# In[1060]:
 
 
 def generatetrainingvalidlist(board, action_logits):
@@ -338,7 +341,7 @@ def generatetrainingvalidlist(board, action_logits):
     return action_logits, done
 
 
-# In[ ]:
+# In[1061]:
 
 
 def evalboard(score):
@@ -363,7 +366,7 @@ def evalboard(score):
     return reward, done, newscore
 
 
-# In[ ]:
+# In[1062]:
 
 
 def domove(action, score):
@@ -386,7 +389,7 @@ def domove(action, score):
     return reward, done, score
 
 
-# In[ ]:
+# In[1063]:
 
 
 def restartgame():
@@ -399,7 +402,7 @@ def restartgame():
     loserbtn.click()
 
 
-# In[ ]:
+# In[1064]:
 
 
 class ActorCritic(tf.keras.Model):
@@ -426,7 +429,7 @@ class ActorCritic(tf.keras.Model):
         return self.actor(x), self.critic(x)
 
 
-# In[ ]:
+# In[1065]:
 
 
 def run_episode( 
@@ -442,7 +445,7 @@ def run_episode(
     while True:
         # Convert state into a batched tensor (batch size = 1)
         state = getboard()
-        modelstate = tf.reshape(state, [1, 16])
+        modelstate = normalizetensorv2(state)
         # Run the model and to get action probabilities and critic value
         action_logits_t, value = model(modelstate)
 
@@ -474,7 +477,7 @@ def run_episode(
     return action_probs, values, rewards
 
 
-# In[ ]:
+# In[1066]:
 
 
 def generateboard():
@@ -502,7 +505,7 @@ def generateboard():
     return board
 
 
-# In[ ]:
+# In[1067]:
 
 
 def moveright(state):
@@ -539,7 +542,7 @@ def moveright(state):
     return state, reward
 
 
-# In[ ]:
+# In[1068]:
 
 
 def moveleft(state):
@@ -577,7 +580,7 @@ def moveleft(state):
     return state, reward
 
 
-# In[ ]:
+# In[1069]:
 
 
 def movedown(state):
@@ -616,7 +619,7 @@ def movedown(state):
     return state, reward
 
 
-# In[ ]:
+# In[1070]:
 
 
 def moveup(state):
@@ -656,13 +659,17 @@ def moveup(state):
     return state, reward
 
 
-# In[ ]:
+# In[1071]:
 
 
 def gentile(state):
     emptytilelist = []
     indices = []
-    values = [random.randint(1, 2) * 2]
+    decider = random.randint(1, 100)
+    if decider < 10:
+        values = [4]
+    else:
+        values = [2]
     for y in range(4):
         for x in range(4):
             if state[y, x] == 0:
@@ -676,7 +683,7 @@ def gentile(state):
     return state
 
 
-# In[ ]:
+# In[1072]:
 
 
 def dotrainmove(action, state):
@@ -688,26 +695,31 @@ def dotrainmove(action, state):
         state, reward = moveright(state)
     elif action == 3:
         state, reward = moveleft(state)
-    reward = tf.cast(reward, dtype = np.int32)
+    reward = tf.cast(reward, dtype = np.float32)
     state = gentile(state)
     return reward, state
 
 
-# In[ ]:
+# In[1073]:
 
 
-def normalizetensor(modelstate, currentrange, normedrange):
-    scalar = currentrange[1]
+def normalizetensor(state):
+    
+    modelstate = tf.reshape(state, [1, 16])
+
     scaledlist = []
     for i in range(16):
-        scaledlist.append(float(modelstate[0, i])/64)
+        if modelstate[0, i] != 0:
+            scaledlist.append(float(math.log(modelstate[0, i], 2)))
+        else:
+            scaledlist.append(float(0))
     scaledtensor = tf.Variable(scaledlist)
     scaledtensor = tf.cast(scaledtensor, dtype = np.float32)
     scaledtensor = tf.reshape(scaledtensor, [1, 16])
     return scaledtensor
 
 
-# In[ ]:
+# In[1074]:
 
 
 def normalizetensorv2(state):
@@ -718,7 +730,7 @@ def normalizetensorv2(state):
         if modelstate[0, i] != 0:
             indexnum = int(math.log(modelstate[0, i], 2) - 1)
             assert((math.log(modelstate[0, i], 2) - 1) % 1 == 0)
-            tilelist[indexnum] = 0.01
+            tilelist[indexnum] = 1
         tiledict[i] = tilelist
     rowzero = tf.constant([tiledict[0], tiledict[1], tiledict[2], tiledict[3]])
     rowone = tf.constant([tiledict[4], tiledict[5], tiledict[6], tiledict[7]])
@@ -730,7 +742,17 @@ def normalizetensorv2(state):
     return binarystate
 
 
-# In[ ]:
+# In[1075]:
+
+
+def checkstatefor2048(state):
+    for y in range(4):
+        for x in range(4):
+            if state[y, x] >= 2048:
+                assert(False)
+
+
+# In[1076]:
 
 
 def runtrainepisode(
@@ -738,11 +760,10 @@ def runtrainepisode(
     
     action_probs = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
     values = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
-    rewards = tf.TensorArray(dtype=tf.int32, size=0, dynamic_size=True)
+    rewards = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
     
     index = 0
-    currentrange = [0, 65536]
-    normedrange = [0, 1]
+    
     state = generateboard()
     while True:
         # Convert state into a batched tensor (batch size = 1)
@@ -757,10 +778,11 @@ def runtrainepisode(
         if done:
             clear_output()
             print(state)
+            checkstatefor2048(state)
             break
         action = tf.random.categorical(used_logits, 1)[0, 0]
         
-        action_probs_t = tf.nn.softmax(action_logits_t)
+        action_probs_t = tf.nn.softmax(used_logits)
         printd("action probs")
         printd(action_probs_t)
         # Store critic values
@@ -783,7 +805,7 @@ def runtrainepisode(
     return action_probs, values, rewards
 
 
-# In[ ]:
+# In[1077]:
 
 
 huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
@@ -811,7 +833,7 @@ def get_expected_return(rewards: tf.Tensor, gamma: float, standardize: bool = Tr
     return returns
 
 
-# In[ ]:
+# In[1078]:
 
 
 def compute_loss(
@@ -829,11 +851,12 @@ def compute_loss(
     actor_loss = -tf.math.reduce_sum(action_log_probs * advantage)
 
     critic_loss = huber_loss(values, returns)
-
+    csvwrite(float(actor_loss), "loss.csv")
+    csvwrite(float(critic_loss), "criticloss.csv")
     return actor_loss + critic_loss
 
 
-# In[ ]:
+# In[1079]:
 
 
 def train_step(
@@ -877,19 +900,18 @@ def train_step(
     print("this was our episode_reward: " + str(episode_reward))
     printd("These are the gradients we're applying:")
     printd(grads)
-    csvwrite(float(loss), "loss.csv")
     csvwrite(float(episode_reward), "episodereward.csv")
     return episode_reward
 
 
-# In[ ]:
+# In[1080]:
 
 
 def restartkernel() :
     display_html("<script>Jupyter.notebook.kernel.restart()</script>",raw=True)
 
 
-# In[ ]:
+# In[1081]:
 
 
 def csvwrite(stat, strfilename):
@@ -898,18 +920,24 @@ def csvwrite(stat, strfilename):
     file.close()
 
 
-# In[ ]:
+# In[1082]:
 
 
-def graphcsv(strfilename, color, label):
+def graphcsv(strfilename, color, label, batchsize):
     x = []
     y = []
     with open(strfilename, 'r') as csvfile:
         lines = csv.reader(csvfile, delimiter=',')
         counter = 0
         for row in lines:
-            x.append(counter)
-            y.append(float(row[0]))
+            if counter == 0:
+                val = float(row[0])
+            elif counter % batchsize == 0: 
+                x.append(counter)
+                y.append(val/batchsize)
+                val = 0
+            else:
+                val += float(row[0])
             counter += 1
     plt.plot(x, y, color = color, linestyle = 'dashed', marker = 'o', 
              label = label)
@@ -922,15 +950,16 @@ def graphcsv(strfilename, color, label):
     plt.show()
 
 
-# In[ ]:
+# In[1083]:
 
 
 def showstats():
-    graphcsv('episodereward.csv', 'g', "Episode Reward")
-    graphcsv('loss.csv', 'r', "Loss") 
+    graphcsv('episodereward.csv', 'g', "Episode Reward", 100)
+    graphcsv('loss.csv', 'r', "Actor Loss", 1000)
+    graphcsv('criticloss.csv', 'b', "Critic Loss", 1000)
 
 
-# In[ ]:
+# In[1084]:
 
 
 def runtest():
@@ -947,7 +976,6 @@ def runtest():
 # In[ ]:
 
 
-#######################################
 DEBUG = False
 TRAINING = True
 TESTING = False
@@ -963,7 +991,7 @@ seed = 42
 tf.random.set_seed(seed)
 np.random.seed(seed)
 model = ActorCritic(4, 256, 12)
-opt = tf.keras.optimizers.Adam(learning_rate=0.01)
+opt = tf.keras.optimizers.Adam(learning_rate=0.001)
 gamma = 0.99
 n = 0
 ckpt = tf.train.Checkpoint(step=tf.Variable(1), optimizer=opt, net=model)
@@ -975,6 +1003,8 @@ while True:
     if manager.latest_checkpoint is None:
         loss = open("loss.csv", "w")
         loss.truncate(0)
+        criticloss = open("criticloss.csv", "w")
+        criticloss.truncate(0)
         episodereward = open("episodereward.csv", "w")
         episodereward.truncate(0)
     train_step(model, opt, gamma, n)
