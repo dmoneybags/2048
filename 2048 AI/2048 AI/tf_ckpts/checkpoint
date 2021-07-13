@@ -1,8 +1,0 @@
-model_checkpoint_path: "ckpt-48010"
-all_model_checkpoint_paths: "ckpt-48008"
-all_model_checkpoint_paths: "ckpt-48009"
-all_model_checkpoint_paths: "ckpt-48010"
-all_model_checkpoint_timestamps: 1626186938.386442
-all_model_checkpoint_timestamps: 1626186942.202181
-all_model_checkpoint_timestamps: 1626186948.33151
-last_preserved_timestamp: 1625163726.8864472
