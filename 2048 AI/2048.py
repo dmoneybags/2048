@@ -778,7 +778,6 @@ def runtrainepisode(
         if done:
             clear_output()
             print(state)
-            checkstatefor2048(state)
             break
         action = tf.random.categorical(used_logits, 1)[0, 0]
         
@@ -954,7 +953,7 @@ def graphcsv(strfilename, color, label, batchsize):
 
 
 def showstats():
-    graphcsv('episodereward.csv', 'g', "Episode Reward", 100)
+    graphcsv('episodereward.csv', 'g', "Episode Reward", 1000)
     graphcsv('loss.csv', 'r', "Actor Loss", 1000)
     graphcsv('criticloss.csv', 'b', "Critic Loss", 1000)
 
@@ -985,7 +984,7 @@ if TESTING:
     while True:
         continue
 if not TRAINING:
-    PATH = "/Users/weston/bin/chromedriver"
+    PATH = "/Users/daniel/chromebin/chromedriver"
     driver = webdriver.Chrome(PATH)
 seed = 42
 tf.random.set_seed(seed)
