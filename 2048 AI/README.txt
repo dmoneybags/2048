@@ -1,3 +1,7 @@
+REINFORCEMENT LEARNING NEURAL NET TO PLAY 2048
+
+https://play2048.co
+
 so basically:
 
 right now hyperparameters were dealing with are:
